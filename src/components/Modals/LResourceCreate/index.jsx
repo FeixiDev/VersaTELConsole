@@ -24,7 +24,7 @@ import { Input, Form, Select } from '@kube-design/components'
 
 import { Modal } from 'components/Base'
 
-import { PATTERN_VTEL_NAME, PATTERN_VTEL_SIZE } from 'utils/constants'
+import { PATTERN_VTEL_NAME, PATTERN_VTEL_SIZE, NEW_PATTERN_VTEL_SIZE  } from 'utils/constants'
 
 import LNodeStore from 'stores/linstornode'
 import StoragepoolStore from 'stores/storagepool'
@@ -64,6 +64,11 @@ export default class LResourceCreateModal extends React.Component {
     //   unselectedNodes: {},
     //   selectedNodes: [],
     // }
+    this.state = {
+      inputValue: '',
+      selectValue: 'GB',
+    }
+
   }
 
   fetchNodes = params => {
@@ -124,6 +129,13 @@ export default class LResourceCreateModal extends React.Component {
   // }
 
   handleCreate = LResourceTemplates => {
+    if (!this.state.inputValue) {
+      alert('请输入资源的大小！')
+      return
+    }
+    this.props.formTemplate.size = this.state.inputValue + this.state.selectValue
+    console.log("handlecreate_this.props.formTemplate",this.props.formTemplate)
+    console.log("this.state",this.state)
     set(
       this.props.formTemplate,
       // 'metadata.annotations["iam.kubesphere.io/aggregation-roles"]',
@@ -175,6 +187,27 @@ export default class LResourceCreateModal extends React.Component {
     const title = 'Create Resource'
     console.log("this.props",this.props)
 
+    const unitdata = [
+      {
+        label: 'MB',
+        value: 'MB',
+      },
+      {
+        label: 'GB',
+        value: 'GB',
+      },
+      {
+        label: 'TB',
+        value: 'TB',
+      },
+    ]
+
+    set(
+      this.props.formTemplate,
+      'size',
+      this.state.inputValue + this.state.selectValue
+    )
+
     return (
       <Modal.Form
         width={600}
@@ -202,16 +235,40 @@ export default class LResourceCreateModal extends React.Component {
         </Form.Item>
         <Form.Item
           label={t('Size')}
-          desc={t('VTEL_SIZE_DESC')}
-          rules={[
-            { required: true, message: t('Please input Resource size') },
-            {
-              pattern: PATTERN_VTEL_SIZE,
-              message: t('Invalid size', { message: t('VTEL_SIZE_DESC') }),
-            },
-          ]}
+          desc={t('NEW_VTEL_SIZE_DESC')}
+          // rules={[{ required: true, message: t('Please input Resource size') }]}
         >
-          <Input name="size" maxLength={63} placeholder="size" />
+          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
+            <Input
+              style={{ width: '70%' }}
+              name="number"
+              maxLength={63}
+              placeholder="size"
+              onChange={e => {
+                const re = /^[0-9\b]+$/
+                if (e.target.value === '' || re.test(e.target.value)) {
+                  this.setState({inputValue: e.target.value})
+                  formTemplate.number = e.target.value // 更新 "size" 字段的值
+                  formTemplate.size = e.target.value + formTemplate.unit // 更新 "Size" 字段的值
+                }
+              }}
+              value={this.state.inputValue}
+            />
+            <Select
+              style={{ width: '28%' }}
+              name="unit"
+              options={unitdata}
+              searchable
+              clearable
+              defaultValue="GB"
+              onChange={value => {
+                this.setState({selectValue: value})
+                formTemplate.unit = value
+                formTemplate.size = this.state.inputValue + value
+              }}
+            />
+          </div>
+          {/*<Input name="size" maxLength={63} placeholder="size" />*/}
         </Form.Item>
         <Form.Item
           label={t('LINSTOR_STORAGEPOOLS')}
