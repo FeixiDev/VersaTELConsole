@@ -29,7 +29,7 @@ import { PATTERN_RB_TIME, PATTERN_VTEL_SIZE , PATTERN_IQN_NAME} from 'utils/cons
 // import LNodeStore from 'stores/linstornode'
 // import StoragepoolStore from 'stores/storagepool'
 import RemoteBackup1Store from 'stores/remotebackup1.js'
-import { NEW_PATTERN_VTEL_SIZE } from "../../../utils/constants";
+import { NEW_PATTERN_VTEL_SIZE, SNAPSHOT_NUMBERS } from "../../../utils/constants";
 
 @observer
 export default class RemoteBackup1ClusterCreateModal extends React.Component {
@@ -108,6 +108,19 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
 
   handleCreate = RemoteBackup1Templates => {
     this.setState({ isLoading: true }) // isloading
+    RemoteBackup1Templates.scheduleName = this.props.scheduleName
+    if (RemoteBackup1Templates.keepLocal === undefined) {
+      RemoteBackup1Templates.keepLocal = ''
+    }
+    if (RemoteBackup1Templates.retries === undefined) {
+      RemoteBackup1Templates.retries = ''
+    }
+    if (RemoteBackup1Templates.full === undefined) {
+      RemoteBackup1Templates.full = ''
+    }
+    if (RemoteBackup1Templates.incremental === undefined) {
+      RemoteBackup1Templates.incremental = ''
+    }
     set(
       this.props.formTemplate,
       JSON.stringify(RemoteBackup1Templates)
@@ -166,24 +179,27 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    console.log("this.props",this.props)
+    const r_incremental = this.props.incremental
+    const r_keepLocal = this.props.keepLocal
+    const r_onFailure = this.props.onFailure
+
 
     const data = [
       {
         label: '每小时: 0 * * * *',
-        value: '每小时: 0 * * * *',
+        value: '0 * * * *',
       },
       {
         label: '每天: 0 0 * * *',
-        value: '每天: 0 0 * * *',
+        value: '0 0 * * *',
       },
       {
         label: '每月: 0 0 1 * *',
-        value: '每月: 0 0 1 * *',
+        value: '0 0 1 * *',
       },
       {
         label: '每个周一到周五: 0 0 1 * 1-5',
-        value: '每个周一到周五: 0 0 1 * 1-5',
+        value: '0 0 1 * 1-5',
       },
     ]
 
@@ -193,7 +209,7 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="job"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
@@ -202,10 +218,10 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
         isSubmitting={this.state.isLoading} // isloading
       >
         <Form.Item
-          label={t('Automatic incremental backup intervals')}
+          label={t('Automatic full backup intervals')}
           desc={t('Select a time interval')}
           rules={[
-            { required: true },
+            { required: false },
             {
               pattern: PATTERN_RB_TIME,
               message: t('时间间隔格式错误', { message: t('Select a time interval') }),
@@ -213,51 +229,57 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
           ]}
         >
           <Select
-            name="resource"
+            name="full"
             options={data}
             searchable
             clearable
-            defaultValue="每小时: 0 * * * *"
+            defaultValue=""
+          />
+        </Form.Item>
+        <Form.Item
+          label={t('Automatic incremental backup intervals')}
+          desc={t('Select a time interval')}
+          rules={[
+            { required: false },
+            {
+              pattern: PATTERN_RB_TIME,
+              message: t('时间间隔格式错误', { message: t('Select a time interval') }),
+            },
+          ]}
+        >
+          <Select
+            name="incremental"
+            options={data}
+            searchable
+            clearable
+            defaultValue=""
           />
         </Form.Item>
         <Form.Item
           label={t('locally reserved snapshots')}
           desc={t('RB_SP_NUMBER')}
           rules={[
-            { required: true, message: t('Please input number of snapshots') },
+            { required: false, message: t('Please input number of snapshots') },
             {
-              pattern: NEW_PATTERN_VTEL_SIZE,
-              message: t('份数填写错误', { message: t('RB_SP_NUMBER') }),
+              pattern: SNAPSHOT_NUMBERS,
+              message: t('份数填写错误,需大于等于1', { message: t('RB_SP_NUMBER') }),
             },
           ]}
         >
-          <Input name="l_snapshot" maxLength={63} placeholder="快照份数" />
-        </Form.Item>
-        <Form.Item
-          label={t('remote reserved snapshots')}
-          desc={t('RB_SP_NUMBER')}
-          rules={[
-            { required: true, message: t('Please input number of snapshots') },
-            {
-              pattern: NEW_PATTERN_VTEL_SIZE,
-              message: t('份数填写错误', { message: t('RB_SP_NUMBER') }),
-            },
-          ]}
-        >
-          <Input name="r_snapshot" maxLength={63} placeholder="快照份数" />
+          <Input name="keepLocal" maxLength={63} placeholder={r_keepLocal} />
         </Form.Item>
         <Form.Item
           label={t('failed retries')}
           desc={t('Please enter the number of retries for transfer failures')}
           rules={[
-            { required: true, message: t('Please input number of snapshots') },
+            { required: false, message: t('请输入传输失败重试次数') },
             {
               pattern: NEW_PATTERN_VTEL_SIZE,
               message: t('次数填写错误', { message: t('Please enter the number of retries for transfer failures') }),
             },
           ]}
         >
-          <Input name="f_times" maxLength={63} placeholder="重试失败次数" />
+          <Input name="retries" maxLength={63} placeholder={r_onFailure} />
         </Form.Item>
       </Modal.Form>
     )

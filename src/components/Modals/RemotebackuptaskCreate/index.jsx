@@ -29,7 +29,7 @@ import { PATTERN_VTEL_NAME, PATTERN_RB_TIME , PATTERN_IQN_NAME} from 'utils/cons
 // import LNodeStore from 'stores/linstornode'
 // import StoragepoolStore from 'stores/storagepool'
 import RemoteBackup1Store from 'stores/remotebackup1.js'
-import { NEW_PATTERN_VTEL_SIZE } from "../../../utils/constants";
+import { NEW_PATTERN_VTEL_SIZE, PATTERN_REMOTECLUSTER_NAME, SNAPSHOT_NUMBERS } from "../../../utils/constants";
 
 @observer
 export default class RemoteBackup1ClusterCreateModal extends React.Component {
@@ -125,38 +125,16 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
     }
 
     // const { workspace, cluster, namespace } = this.props
-    const name = get(this.props.formTemplate, 'hostname')
+    const name = get(this.props.formTemplate, 'scheduleName')
 
     if (this.props.edit && name === value) {
       return callback()
     }
 
-    const isNameExistInTargetData = this.props.host_data.some(item => item.hostName === value)
+    const isNameExistInTargetData = this.props.data.some(item => item.scheduleName === value)
     if (isNameExistInTargetData) {
       return callback({
-        message: t('Hostname exists'),
-        field: rule.field,
-      })
-    }
-    callback()
-  }
-
-  iqnValidator = (rule, value, callback) => {
-    if (!value) {
-      return callback()
-    }
-
-    // const { workspace, cluster, namespace } = this.props
-    const name = get(this.props.formTemplate, 'iqn')
-
-    if (this.props.edit && name === value) {
-      return callback()
-    }
-
-    const isNameExistInTargetData = this.props.host_data.some(item => item.iqn === value)
-    if (isNameExistInTargetData) {
-      return callback({
-        message: t('iqn exists'),
+        message: t('schedulename exists'),
         field: rule.field,
       })
     }
@@ -166,7 +144,6 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    console.log("this.props",this.props)
 
     const data = [
       {
@@ -187,13 +164,13 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
       },
     ]
 
-    const title = 'Create Remote Backup Cluster'
+    const title = 'Create Remote Backup Task'
 
     return (
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="job"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
@@ -203,17 +180,38 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
       >
         <Form.Item
           label={t('remote backup task name')}
-          desc={t('VTEL_NAME_DESC')}
+          desc={t(
+            '仅支持字母、数字、中横线，且中横线不能在字段的首尾，长度必须大于等于2'
+          )}
           rules={[
-            { required: true, message: t('Please input task name') },
+            { required: true, message: t('请输入任务名称') },
             {
-              pattern: PATTERN_VTEL_NAME,
-              message: t('名称格式错误', { message: t('VTEL_NAME_DESC') }),
+              pattern: PATTERN_REMOTECLUSTER_NAME,
+              message: t('名称格式错误', { message: t('仅支持字母、数字、中横线，且中横线不能在字段的首尾，长度必须大于等于2') }),
             },
             { validator: this.NameValidator },
           ]}
         >
-          <Input name="taskname" maxLength={63} placeholder="任务名称" />
+          <Input name="scheduleName" maxLength={63} placeholder="任务名称" />
+        </Form.Item>
+        <Form.Item
+          label={t('Automatic full backup intervals')}
+          desc={t('Select a time interval')}
+          rules={[
+            { required: true },
+            {
+              pattern: PATTERN_RB_TIME,
+              message: t('时间间隔格式错误', { message: t('Select a time interval') }),
+            },
+          ]}
+        >
+          <Select
+            name="full"
+            options={data}
+            searchable
+            clearable
+            defaultValue="0 * * * *"
+          />
         </Form.Item>
         <Form.Item
           label={t('Automatic incremental backup intervals')}
@@ -227,11 +225,11 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
           ]}
         >
           <Select
-            name="resource"
+            name="incremental"
             options={data}
             searchable
             clearable
-            defaultValue="每小时: 0 * * * *"
+            defaultValue="0 * * * *"
           />
         </Form.Item>
         <Form.Item
@@ -240,38 +238,25 @@ export default class RemoteBackup1ClusterCreateModal extends React.Component {
           rules={[
             { required: true, message: t('Please input number of snapshots') },
             {
-              pattern: NEW_PATTERN_VTEL_SIZE,
-              message: t('份数填写错误', { message: t('RB_SP_NUMBER') }),
+              pattern: SNAPSHOT_NUMBERS,
+              message: t('份数填写错误,需大于等于1', { message: t('RB_SP_NUMBER') }),
             },
           ]}
         >
-          <Input name="l_snapshot" maxLength={63} placeholder="快照份数" />
-        </Form.Item>
-        <Form.Item
-          label={t('remote reserved snapshots')}
-          desc={t('RB_SP_NUMBER')}
-          rules={[
-            { required: true, message: t('Please input number of snapshots') },
-            {
-              pattern: NEW_PATTERN_VTEL_SIZE,
-              message: t('份数填写错误', { message: t('RB_SP_NUMBER') }),
-            },
-          ]}
-        >
-          <Input name="r_snapshot" maxLength={63} placeholder="快照份数" />
+          <Input name="keepLocal" maxLength={63} placeholder="快照份数" />
         </Form.Item>
         <Form.Item
           label={t('failed retries')}
           desc={t('Please enter the number of retries for transfer failures')}
           rules={[
-            { required: true, message: t('Please input number of snapshots') },
+            { required: true, message: t('请输入传输失败重试次数') },
             {
               pattern: NEW_PATTERN_VTEL_SIZE,
               message: t('次数填写错误', { message: t('Please enter the number of retries for transfer failures') }),
             },
           ]}
         >
-          <Input name="f_times" maxLength={63} placeholder="重试失败次数" />
+          <Input name="retries" maxLength={63} placeholder="重试失败次数" />
         </Form.Item>
       </Modal.Form>
     )

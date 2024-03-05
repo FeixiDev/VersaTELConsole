@@ -126,7 +126,7 @@ export default class SnapshotCreateModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="snapshot"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}

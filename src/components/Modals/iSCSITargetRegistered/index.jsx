@@ -214,7 +214,6 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
     const { showStepOne } = this.state
 
     const { isLoading } = this.state
-    console.log("step0.this.props",this.props)
     // console.log("this.state",this.state)
     set(this.props.formTemplate, 'iqn', this.state.iqn)
 
@@ -242,7 +241,7 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="target"
         data={formTemplate}
         onCancel={this.handleCancel}
         // onOk={this.handleStepOne}

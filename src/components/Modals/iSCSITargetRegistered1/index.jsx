@@ -231,8 +231,6 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
           obj2 => obj.label === obj2.label && obj.value === obj2.value
         )
     )
-    console.log("step1.this.props",this.props)
-    console.log("step1.this.state",this.state)
 
     // if (this.props.flag) {
     //   this.fetchResource()
@@ -279,7 +277,7 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="target"
         data={formTemplate}
         // onCancel={onCancel}
         onCancel={this.showStepZero}

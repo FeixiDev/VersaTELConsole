@@ -31,14 +31,13 @@ export default {
       const { module } = store
       const modal = Modal.open({
         onOk: data => {
-          console.log('data', data)
           if (!data) {
             Modal.close(modal)
             return
           }
           request
             .delete(
-              `/kapis/versatel.kubesphere.io/v1alpha1/target/${data.name} `
+              `/kapis/versatel.kubesphere.io/v1alpha1/schedule/${data.schedulename}  `
             )
             .then(res => {
               if (Array.isArray(res)) {
@@ -71,13 +70,12 @@ export default {
       const { module } = store
       const modal = Modal.open({
         onOk: data => {
-          console.log('data', data)
           if (!data) {
             Modal.close(modal)
             return
           }
           request
-            .post(`/kapis/versatel.kubesphere.io/v1alpha1/storage`, data)
+            .post(`/kapis/versatel.kubesphere.io/v1alpha1/modify`, data)
             .then(res => {
               if (Array.isArray(res)) {
                 Notify.error({
@@ -109,16 +107,12 @@ export default {
       const { module } = store
       const modal = Modal.open({
         onOk: data => {
-          let vipList = [data.vip1]
-          if (data.vip2) vipList.push(data.vip2)
-          data.vipList = vipList
-          console.log("data",data)
           if (!data) {
             Modal.close(modal)
             return
           }
           request
-            .post(`/kapis/versatel.kubesphere.io/v1alpha1/target`, data)
+            .post(`/kapis/versatel.kubesphere.io/v1alpha1/schedule`, data)
             .then(res => {
               if (Array.isArray(res)) {
                 Notify.error({

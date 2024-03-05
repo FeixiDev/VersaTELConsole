@@ -48,15 +48,19 @@ import RemoteBackupStore1 from 'stores/remotebackup1'
 })
 export default class Remotebackup1 extends React.Component {
   componentDidMount() {
-    this.interval = setInterval(() => {
-      this.props.tableProps.tableActions.onFetch({ silent: true })
-    }, 5000)
+    this.fetchData(true) // Pass true for the initial fetch
+    this.interval = setInterval(() => this.fetchData(false), 5000) // Pass false for subsequent fetches
   }
 
   componentWillUnmount() {
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
+    clearInterval(this.interval)
+  }
+
+  fetchData = silent_flag => {
+    this.props.tableProps.tableActions.onFetch({
+      silent: true,
+      silent_flag: silent_flag,
+    })
   }
 
   showAction = record => !record.isFedManaged
@@ -72,9 +76,9 @@ export default class Remotebackup1 extends React.Component {
         // show: item => parseInt(item.storageNum) < 1,
         onClick: item => {
           trigger('rb_task.delete', {
-            iSCSIMapping1Templates: toJS(store.iSCSIMapping1Templates.data),
+            RemoteBackup1Templates: toJS(store.RemoteBackup1Templates.data),
             // success: getData,
-            targetname: item?.name,
+            scheduleName: item?.scheduleName,
           })
         },
       },
@@ -86,9 +90,12 @@ export default class Remotebackup1 extends React.Component {
         // show: item => parseInt(item.storageNum) < 1,
         onClick: item => {
           trigger('rb_task.edit', {
-            iSCSIMapping1Templates: toJS(store.iSCSIMapping1Templates.data),
+            RemoteBackup1Templates: toJS(store.RemoteBackup1Templates.data),
             // success: getData,
-            targetname: item?.name,
+            scheduleName: item?.scheduleName,
+            incremental: item?.incremental,
+            keepLocal: item?.keepLocal,
+            onFailure: item?.onFailure.match(/\d+/g)[0],
           })
         },
       },
@@ -146,31 +153,33 @@ export default class Remotebackup1 extends React.Component {
         title: t('name'),
         dataIndex: 'scheduleName',
         width: '20%',
-        render: scheduleName => scheduleName,
+        render: scheduleName => (
+          <Avatar icon={'job'} title={scheduleName} noLink />
+        ),
       },
       {
         title: t('time_info'),
-        dataIndex: 'name',
+        dataIndex: 'incremental',
         width: '20%',
-        render: name => name,
+        render: incremental => incremental,
+      },
+      {
+        title: t('time1_info'),
+        dataIndex: 'full',
+        width: '20%',
+        render: full => full,
       },
       {
         title: t('local_snapshot'),
-        dataIndex: 'name',
+        dataIndex: 'keepLocal',
         width: '20%',
-        render: name => name,
-      },
-      {
-        title: t('remote_snapshot'),
-        dataIndex: 'name',
-        width: '20%',
-        render: name => name,
+        render: keepLocal => keepLocal,
       },
       {
         title: t('failed_t'),
-        dataIndex: 'name',
+        dataIndex: 'onFailure',
         width: '20%',
-        render: name => name,
+        render: onFailure => onFailure,
       },
     ]
   }
@@ -178,26 +187,48 @@ export default class Remotebackup1 extends React.Component {
   showCreate = () =>
     this.props.trigger('rb_task.create', {
       ...this.props.match.params,
-      target_data: this.props.tableProps.data,
+      data: this.props.tableProps.data,
       success: () => this.props.getData,
     })
 
   render() {
     const { bannerProps, tableProps } = this.props
-    console.log("backup1_props",this.props)
+    const error = tableProps.data[0]?.error
+    const ipPortRegex = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/
+    const match = error?.match(ipPortRegex)
+    const ipPort = match ? match[0] : ''
+
+    const LoadingComponent = () => (
+      <div style={{ textAlign: 'center' }}>
+        <strong style={{ fontSize: '20px' }}>Loading...</strong>
+        <p>无法连接至controller ip：{ipPort}</p>
+      </div>
+    )
+
+    // 检查store中的数据是否包含error属性
+    const isLoading = tableProps.data.some(item => item.error)
+
     return (
       <ListPage {...this.props} module="namespaces">
         <Banner {...bannerProps} tabs={this.tabs} />
-        <Table
-          {...tableProps}
-          itemActions={this.itemActions}
-          tableActions={this.tableActions}
-          columns={this.getColumns()}
-          rowSelection={undefined}
-          searchType="name"
-          hideSearch={true}
-        />
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <LoadingComponent />
+          </div>
+        ) : (
+          <Table
+            {...tableProps}
+            itemActions={this.itemActions}
+            tableActions={this.tableActions}
+            columns={this.getColumns()}
+            rowSelection={undefined}
+            searchType="scheduleName"
+            placeholder={t('按任务搜索')}
+            hideSearch={false}
+          />
+        )}
       </ListPage>
     )
   }
 }
+

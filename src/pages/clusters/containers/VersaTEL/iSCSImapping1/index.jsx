@@ -48,15 +48,19 @@ import iSCSIMapping1Store from 'stores/iSCSImapping1'
 })
 export default class iSCSIMapping1 extends React.Component {
   componentDidMount() {
-    this.interval = setInterval(() => {
-      this.props.tableProps.tableActions.onFetch({ silent: true })
-    }, 5000)
+    this.fetchData(true) // Pass true for the initial fetch
+    this.interval = setInterval(() => this.fetchData(false), 5000) // Pass false for subsequent fetches
   }
 
   componentWillUnmount() {
-    if (this.interval) {
-      clearInterval(this.interval)
-    }
+    clearInterval(this.interval)
+  }
+
+  fetchData = silent_flag => {
+    this.props.tableProps.tableActions.onFetch({
+      silent: true,
+      silent_flag: silent_flag,
+    })
   }
 
   showAction = record => !record.isFedManaged
@@ -162,7 +166,9 @@ export default class iSCSIMapping1 extends React.Component {
         title: t('Target'),
         dataIndex: 'name',
         width: '25%',
-        render: name => name,
+        render: name => (
+          <Avatar icon={'target'} title={name} noLink />
+        ),
       },
       {
         title: t('IQN'),
@@ -210,7 +216,6 @@ export default class iSCSIMapping1 extends React.Component {
 
   render() {
     const { bannerProps, tableProps } = this.props
-    console.log("this.props",this.props)
     return (
       <ListPage {...this.props} module="namespaces">
         <Banner {...bannerProps} tabs={this.tabs} />
@@ -221,7 +226,8 @@ export default class iSCSIMapping1 extends React.Component {
           columns={this.getColumns()}
           rowSelection={undefined}
           searchType="name"
-          hideSearch={true}
+          placeholder={t('按Target搜索')}
+          hideSearch={false}
         />
       </ListPage>
     )

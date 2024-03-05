@@ -16,22 +16,24 @@
  * along with KubeSphere Console.  If not, see <https://www.gnu.org/licenses/>.
  */
 
-import { get } from 'lodash'
-import { action } from 'mobx'
+import { get, isEqual } from "lodash";
+import { action, toJS } from "mobx";
 
 import Base from 'stores/base'
 import List from 'stores/base.list'
 // import { LIST_DEFAULT_ORDER } from 'utils/constants'
 
-export default class iSCSIMapping1Store extends Base {
-  iSCSIMapping1Templates = new List()
+export default class RemoteBackup1Store extends Base {
+  RemoteBackup1Templates = new List()
 
-  getiSCSIMapping1Url = () =>
+  hasLoadedOnce = false // 新增状态标志，用于跟踪是否至少完成了一次数据加载
+
+  getRemoteBackup1Url = () =>
     `/kapis/versatel.kubesphere.io/v1alpha1/schedule`
 
-  getListUrl = this.getiSCSIMapping1Url
+  getListUrl = this.getRemoteBackup1Url
 
-  constructor(module = 'iSCSImapping1') {
+  constructor(module = 'remotebackup1') {
     super(module)
   }
 
@@ -42,9 +44,15 @@ export default class iSCSIMapping1Store extends Base {
     namespace,
     devops,
     more,
+    silent_flag,
+    silent,
     ...params
   } = {}) {
-    this.list.isLoading = true
+    if (silent_flag === true) {
+      this.list.isLoading = true
+    } else {
+      this.list.isLoading = false
+    }
 
     // if (!params.sortBy && params.ascending === undefined) {
     //   params.sortBy = LIST_DEFAULT_ORDER[this.module] || 'createTime'
@@ -56,37 +64,48 @@ export default class iSCSIMapping1Store extends Base {
     }
     params.limit = params.limit || 10
 
-    const result = await request.get(this.getiSCSIMapping1Url(), {
+    const result = await request.get(this.getRemoteBackup1Url(), {
       ...params,
     })
 
     // const data = get(result, 'data', [])
-    const rawData = get(result, 'data', null)
-    const data = rawData ? rawData.filter(item => !item.name.includes('pvc-')) : null
+    const rawData = get(result, 'data', [])
+    let data
 
-    if (data) {
+    if (rawData === null) {
+      data = []
+    } else if (rawData.length === 1 && 'error' in rawData[0]) {
+      data = rawData.map(this.mapper)
+    } else {
+      data = rawData.length > 0 ? rawData : null
+    }
+
+    // 使用isEqual来比较新旧数据
+    if (!isEqual(toJS(this.list.data), data)) {
       this.list.update({
         data: more ? [...this.list.data, ...data] : data,
-        total: data.length,
+        total: result.count || result.totalItems || result.total_count || data.length || 0,
         ...params,
         limit: Number(params.limit) || 10,
         page: Number(params.page) || 1,
-        isLoading: false,
+        isLoading: false, // 数据有变化时，更新isLoading状态
         ...(this.list.silent ? {} : { selectedRowKeys: [] }),
       })
+    } else if (silent_flag === true) {
+      this.list.isLoading = false
     } else {
-      this.list.update({ isLoading: false })
+      // 如果数据没有变化，且不是静默加载，不更新isLoading状态
     }
   }
 
   @action
-  async fetchLiSCSIMapping1Templates() {
-    this.iSCSIMapping1Templates.isLoading = true
+  async fetchLRemoteBackup1Templates() {
+    this.RemoteBackup1Templates.isLoading = true
 
     const result = await request.get(
       `/kapis/versatel.kubesphere.io/v1alpha1/target`
     )
-    this.iSCSIMapping1Templates.update({
+    this.RemoteBackup1Templates.update({
       data: get(result, 'data', []).map(this.mapper),
       // data: get(result, 'data', []),
       total: result.count || result.totalItems || result.total_count || 0,
@@ -97,12 +116,12 @@ export default class iSCSIMapping1Store extends Base {
   @action
   async fetchDetail(params) {
     this.isLoading = true
-    const result = await request.get(this.getiSCSIMapping1Url(), {
+    const result = await request.get(this.getRemoteBackup1Url(), {
       name: params.name,
     })
     const filterData = get(result, 'data', [])
     const data = filterData.filter(item => item.name === params.name)
-    const detail = { ...params, ...data[0], kind: 'iSCSIMapping1' }
+    const detail = { ...params, ...data[0], kind: 'RemoteBackup1' }
     this.detail = detail
     this.isLoading = false
     return detail

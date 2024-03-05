@@ -72,9 +72,10 @@ export default class Remotebackup1 extends React.Component {
         show: true,
         onClick: item => {
           trigger('rb_auto.delete', {
-            iSCSIMapping2Templates: toJS(store.iSCSIMapping2Templates.data),
+            RemoteBackup2Templates: toJS(store.RemoteBackup2Templates.data),
             // success: getData,
-            hostname_list: item?.hostName,
+            remoteName: item?.remoteName,
+            scheduleName: item?.scheduleName,
             resName: item?.resName,
           })
         },
@@ -135,33 +136,39 @@ export default class Remotebackup1 extends React.Component {
     return [
       {
         title: t('name'),
-        dataIndex: 'hostName',
+        dataIndex: 'resName',
         width: '20%',
-        render: hostName => hostName,
+        render: resName => (
+          <Avatar icon={'resource'} title={resName} noLink />
+        ),
       },
       {
         title: t('backup_task'),
-        dataIndex: 'hostName',
+        dataIndex: 'scheduleName',
         width: '20%',
-        render: hostName => hostName,
+        render: scheduleName => (
+          <Avatar icon={'job'} title={scheduleName} noLink />
+        ),
       },
       {
         title: t('cluster'),
-        dataIndex: 'hostName',
+        dataIndex: 'remoteName',
         width: '20%',
-        render: hostName => hostName,
+        render: remoteName => (
+          <Avatar icon={'cluster'} title={remoteName} noLink />
+        ),
       },
       {
         title: t('last_time'),
-        dataIndex: 'hostName',
+        dataIndex: 'lastPlan',
         width: '20%',
-        render: hostName => hostName,
+        render: lastPlan => lastPlan,
       },
       {
         title: t('next_time'),
-        dataIndex: 'hostName',
+        dataIndex: 'nextPlan',
         width: '20%',
-        render: hostName => hostName,
+        render: nextPlan => nextPlan,
       },
     ]
   }
@@ -170,22 +177,45 @@ export default class Remotebackup1 extends React.Component {
     this.props.trigger('rb_auto.create', {
       ...this.props.match.params,
       success: () => this.props.getData,
+      data: this.props.store.list.data,
     })
 
   render() {
     const { bannerProps, tableProps } = this.props
+    const error = tableProps.data[0]?.error
+    const ipPortRegex = /(\d{1,3}\.\d{1,3}\.\d{1,3}\.\d{1,3}:\d+)/
+    const match = error?.match(ipPortRegex)
+    const ipPort = match ? match[0] : ''
+
+    const LoadingComponent = () => (
+      <div style={{ textAlign: 'center' }}>
+        <strong style={{ fontSize: '20px' }}>Loading...</strong>
+        <p>无法连接至controller ip：{ipPort}</p>
+      </div>
+    )
+
+    // 检查store中的数据是否包含error属性
+    const isLoading = tableProps.data.some(item => item.error)
+
     return (
       <ListPage {...this.props} module="namespaces">
         <Banner {...bannerProps} tabs={this.tabs} />
-        <Table
-          {...tableProps}
-          itemActions={this.itemActions}
-          tableActions={this.tableActions}
-          columns={this.getColumns()}
-          rowSelection={undefined}
-          searchType="name"
-          hideSearch={true}
-        />
+        {isLoading ? (
+          <div style={{ display: 'flex', justifyContent: 'center', alignItems: 'center', height: '100%' }}>
+            <LoadingComponent />
+          </div>
+        ) : (
+          <Table
+            {...tableProps}
+            itemActions={this.itemActions}
+            tableActions={this.tableActions}
+            columns={this.getColumns()}
+            rowSelection={undefined}
+            searchType="resName"
+            placeholder={t('按名称搜索')}
+            hideSearch={false}
+          />
+        )}
       </ListPage>
     )
   }

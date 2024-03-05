@@ -29,6 +29,7 @@ import { PATTERN_VTEL_NAME, PATTERN_RB_URL , PATTERN_IQN_NAME} from 'utils/const
 // import LNodeStore from 'stores/linstornode'
 // import StoragepoolStore from 'stores/storagepool'
 import RemoteBackupStore from 'stores/remotebackup'
+import { PATTERN_REMOTECLUSTER_NAME } from "../../../utils/constants";
 
 @observer
 export default class RemoteBackupClusterCreateModal extends React.Component {
@@ -140,32 +141,9 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
     callback()
   }
 
-  IdValidator = (rule, value, callback) => {
-    if (!value) {
-      return callback()
-    }
-
-    // const { workspace, cluster, namespace } = this.props
-    const name = get(this.props.formTemplate, 'clusterId')
-
-    if (this.props.edit && name === value) {
-      return callback()
-    }
-
-    const isNameExistInTargetData = this.props.data.some(item => item.url === value)
-    if (isNameExistInTargetData) {
-      return callback({
-        message: t('url exists'),
-        field: rule.field,
-      })
-    }
-    callback()
-  }
-
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    console.log("create.props",this.props)
 
     const title = 'Create Remote Backup Cluster'
 
@@ -173,7 +151,7 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="cluster"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
@@ -183,12 +161,14 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
       >
         <Form.Item
           label={t('remotecluster name')}
-          desc={t('VTEL_NAME_DESC')}
+          desc={t(
+            '仅支持字母、数字、中横线，且中横线不能在字段的首尾，长度必须大于等于2'
+          )}
           rules={[
             { required: true, message: t('Please input cluster name') },
             {
-              pattern: PATTERN_VTEL_NAME,
-              message: t('名称格式错误', { message: t('VTEL_NAME_DESC') }),
+              pattern: PATTERN_REMOTECLUSTER_NAME,
+              message: t('名称格式错误', { message: t('仅支持字母、数字、中横线，且中横线不能在字段的首尾，长度必须大于等于2') }),
             },
             { validator: this.NameValidator },
           ]}
@@ -199,7 +179,7 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
           label={t('remotecluster id')}
           desc={t('RB_CLUSTER_ID')}
           rules={[
-            { required: true, message: t('Please input cluster id') },
+            { required: true, message: t('请输入集群id') },
             // { validator: this.IdValidator },
           ]}
         >
@@ -209,7 +189,7 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
           label={t('remotecluster URL')}
           desc={t('VTEL_URL_DESC')}
           rules={[
-            { required: true, message: t('Please input cluster URL') },
+            { required: true, message: t('请输入集群URL') },
             {
               pattern: PATTERN_RB_URL,
               message: t('URL格式错误', { message: t('VTEL_URL_DESC') }),

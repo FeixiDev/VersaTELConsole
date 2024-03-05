@@ -108,13 +108,16 @@ export default class iSCSIMapping2MapModal extends React.Component {
     if (Array.isArray(this.props.formTemplate.hostname)) {
       this.props.formTemplate.hostname = this.props.formTemplate.hostname.filter(item => item !== 'all')
     }
+    if (this.state.selectedHostnames.length > 0) {
+      set(this.props.formTemplate, 'hostname', this.state.selectedHostnames)
+    }
     this.props.onOk(this.props.formTemplate)
   }
 
   handleSelectChange = selectedValues => {
     if (selectedValues.includes('all')) {
       this.fetchHostName().then(() => {
-        const nodes = this.iSCSIMappingStore.list.data.map(node => node.hostName)
+        const nodes = this.hostname.map(node => node.value)
         nodes.unshift('all')
         this.setState({ selectedHostnames: nodes })
       })
@@ -122,26 +125,7 @@ export default class iSCSIMapping2MapModal extends React.Component {
       this.setState({ selectedHostnames: [] })
     }
   }
-  // handleSelectChange = selectedValues => {
-  //   if (selectedValues.includes('all')) {
-  //     this.fetchHostName().then(() => {
-  //       const nodes = this.iSCSIMappingStore.list.data.map(node => node.hostName)
-  //       nodes.unshift('all')
-  //       this.setState({ selectedHostnames: nodes })
-  //     })
-  //   } else {
-  //     const selectedHostnames = this.state.selectedHostnames.filter(hostname => selectedValues.includes(hostname))
-  //     this.setState({ selectedHostnames })
-  //
-  //     if (selectedHostnames.length !== this.iSCSIMappingStore.list.data.length) {
-  //       const index = selectedHostnames.indexOf('all')
-  //       if (index > -1) {
-  //         selectedHostnames.splice(index, 1)
-  //       }
-  //       this.setState({ selectedHostnames })
-  //     }
-  //   }
-  // }
+
   onLoadingComplete = () => {
     this.setState({ isLoading: false })
   } // isloading
@@ -170,15 +154,13 @@ export default class iSCSIMapping2MapModal extends React.Component {
       ...this.hostname,
     ]
 
-    console.log("this.props",this.props)
-
     set(this.props.formTemplate, 'hostname', this.state.selectedHostnames)
 
     return (
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="upload"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
@@ -215,7 +197,6 @@ export default class iSCSIMapping2MapModal extends React.Component {
           label={t('REGISTERED_HOST')}
           desc={t('Select registered host')}
           rules={[{ required: true }]}
-
         >
           <Select
             name="hostname"

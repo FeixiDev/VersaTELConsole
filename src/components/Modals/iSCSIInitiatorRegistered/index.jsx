@@ -165,7 +165,6 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    console.log("this.props",this.props)
 
     const title = 'Initiator Registered'
 
@@ -174,7 +173,7 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="laptop"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}

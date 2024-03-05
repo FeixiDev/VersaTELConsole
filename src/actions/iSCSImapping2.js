@@ -29,7 +29,6 @@ export default {
       const { module } = store
       const modal = Modal.open({
         onOk: data => {
-          console.log('data', data)
           if (!data) {
             Modal.close(modal)
             return
@@ -51,6 +50,12 @@ export default {
             })
             .finally(() => {
               Modal.close(modal)
+              localStorage.removeItem('iqn')
+              localStorage.removeItem('runningNode')
+              localStorage.removeItem('secondaryNode')
+              localStorage.removeItem('initialNode')
+              localStorage.removeItem('isRunningNodeDisabled')
+              localStorage.removeItem('vipCount')
             })
           // request
           //   .delete(
@@ -90,7 +95,6 @@ export default {
           } else if (data.unMap === '开启') {
             data.unMap = '1'
           }
-          console.log('data', data)
           if (!data) {
             Modal.close(modal)
             return

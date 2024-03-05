@@ -21,16 +21,16 @@ import React from 'react'
 import { observer } from 'mobx-react'
 import PropTypes from 'prop-types'
 import { Input, Form, Select } from '@kube-design/components'
+import { InputPassword } from 'components/Inputs'
 
 import { Modal } from 'components/Base'
 
-import { PATTERN_VTEL_NAME, PATTERN_VTEL_SIZE , PATTERN_IQN_NAME} from 'utils/constants'
+import { PATTERN_VTEL_NAME, PATTERN_RB_URL , PATTERN_IQN_NAME, PATTERN_PASSWORD } from 'utils/constants'
 
 // import LNodeStore from 'stores/linstornode'
 // import StoragepoolStore from 'stores/storagepool'
 import RemoteBackupStore from 'stores/remotebackup'
-import RemoteBackup1Store from 'stores/remotebackup1'
-import SnapShotStore from 'stores/snapshot'
+import styles from "../UserSetting/PasswordSetting/index.scss";
 
 @observer
 export default class RemoteBackupClusterCreateModal extends React.Component {
@@ -58,65 +58,54 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
     super(props)
 
     this.RemoteBackupStore = new RemoteBackupStore()
-    this.RemoteBackup1Store = new RemoteBackup1Store()
-    this.SnapShotStore = new SnapShotStore()
 
-    this.fetchCluster()
-    this.fetchTResource()
-    this.fetchTask()
+    this.fetchResource()
 
     this.state = {
       isLoading: false, // isloading
     }
   }
 
-  fetchCluster = params => {
+  fetchResource = params => {
     return this.RemoteBackupStore.fetchList({
       ...params,
     })
   }
+  // get nodes() {
+  //   const allNodes = this.linstornodeStore.list.data.map(node => {
+  //     if(node.storagePoolNum > 1) {
+  //       return ({
+  //         label: node.name,
+  //         value: node.name,
+  //         visual: true,
+  //       })
+  //     }else{
+  //       return ({
+  //         label: node.name,
+  //         value: node.name,
+  //         visual: false,
+  //       })
+  //     }
+  //   })
+  //   const nodes = allNodes.filter(node => node.visual)
+  //   return nodes
+  // }
 
-  fetchTask = params => {
-    return this.RemoteBackup1Store.fetchList({
-      ...params,
-    })
-  }
-
-  fetchTResource = params => {
-    return this.SnapShotStore.fetchList({
-      ...params,
-    })
-  }
-
-  get clusters() {
+  get resources() {
     const resources = this.RemoteBackupStore.list.data.map(node => ({
-      label: node.remoteName,
-      value: node.remoteName,
-    }))
-    return resources
-  }
-
-  get tasks() {
-    const resources = this.RemoteBackup1Store.list.data.map(node => ({
-      label: node.scheduleName,
-      value: node.scheduleName,
-    }))
-    return resources
-  }
-
-  get tresources() {
-    let resources = this.SnapShotStore.list.data.map(node => ({
       label: node.name,
       value: node.name,
     }))
-
-    resources = resources.filter(
-      resource =>
-        !this.props.data.some(dataItem => dataItem.resName === resource.label)
-    )
-
     return resources
   }
+
+  // handleStoragepoolChange = value => {
+  //   const { selectedNodes } = this.state
+  //   const selectedNodesList = value.map(value => value[1])
+  //   this.setState({ selectedNodes: selectedNodesList })
+  //   const newNodes = this.nodes.filter(node => selectedNodes.indexOf(node.value) === -1)
+  //   this.setState({ unselectedNodes: newNodes })
+  // }
 
   handleCreate = RemoteBackupTemplates => {
     this.setState({ isLoading: true }) // isloading
@@ -137,38 +126,16 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
     }
 
     // const { workspace, cluster, namespace } = this.props
-    const name = get(this.props.formTemplate, 'hostname')
+    const name = get(this.props.formTemplate, 'remoteName')
 
     if (this.props.edit && name === value) {
       return callback()
     }
 
-    const isNameExistInTargetData = this.props.host_data.some(item => item.hostName === value)
+    const isNameExistInTargetData = this.props.data.some(item => item.remoteName === value)
     if (isNameExistInTargetData) {
       return callback({
-        message: t('Hostname exists'),
-        field: rule.field,
-      })
-    }
-    callback()
-  }
-
-  iqnValidator = (rule, value, callback) => {
-    if (!value) {
-      return callback()
-    }
-
-    // const { workspace, cluster, namespace } = this.props
-    const name = get(this.props.formTemplate, 'iqn')
-
-    if (this.props.edit && name === value) {
-      return callback()
-    }
-
-    const isNameExistInTargetData = this.props.host_data.some(item => item.iqn === value)
-    if (isNameExistInTargetData) {
-      return callback({
-        message: t('iqn exists'),
+        message: t('remotename exists'),
         field: rule.field,
       })
     }
@@ -178,13 +145,14 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    const title = 'Create automated remote backups'
+
+    const title = 'Password'
 
     return (
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="resource"
+        icon="database"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
@@ -193,42 +161,37 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
         isSubmitting={this.state.isLoading} // isloading
       >
         <Form.Item
-          label={t('backup_resource')}
-          desc={t('Select the resources that you want to back up')}
-          rules={[{ required: true }]}
+          label={t('password input')}
+          desc={t('input password')}
+          rules={[
+            { required: true, message: t('Please input cluster name') },
+            {
+              pattern: PATTERN_VTEL_NAME,
+              message: t('名称格式错误', { message: t('VTEL_NAME_DESC') }),
+            },
+            { validator: this.NameValidator },
+          ]}
         >
-          <Select
-            name="resName"
-            options={this.tresources}
-            searchable
-            clearable
-            defaultValue=""
-          />
+          <Input name="remoteName" maxLength={63} placeholder="密码" />
         </Form.Item>
         <Form.Item
-          label={t('backup_cluster')}
-          desc={t('Select the cluster that you want to back up')}
-          rules={[{ required: true }]}
+          className={styles.password}
+          label={t('NEW_PASSWORD')}
+          rules={[
+            { required: true, message: t('PASSWORD_EMPTY_DESC') },
+            {
+              pattern: PATTERN_PASSWORD,
+              message: t('PASSWORD_DESC'),
+            },
+          ]}
         >
-          <Select
-            name="remoteName"
-            options={this.clusters}
-            searchable
-            clearable
-            defaultValue=""
-          />
-        </Form.Item>
-        <Form.Item
-          label={t('backup_task')}
-          desc={t('Select the task that you want to back up')}
-          rules={[{ required: true }]}
-        >
-          <Select
-            name="scheduleName"
-            options={this.tasks}
-            searchable
-            clearable
-            defaultValue=""
+          <InputPassword
+            name="password"
+            placeholder=" "
+            autoComplete="new-password"
+            onChange={this.handlePassswordChange}
+            tipClassName={styles.dropdown}
+            withStrength
           />
         </Form.Item>
       </Modal.Form>

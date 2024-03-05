@@ -144,9 +144,15 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       return
     }
     this.setState({ isLoading: true }) // isloading
-    console.log("dataforonok",dataForOnOk)
 
     this.props.onOk(dataForOnOk)
+
+    localStorage.removeItem('iqn')
+    localStorage.removeItem('runningNode')
+    localStorage.removeItem('secondaryNode')
+    localStorage.removeItem('initialNode')
+    localStorage.removeItem('isRunningNodeDisabled')
+    localStorage.removeItem('vipCount')
   }
 
   onLoadingComplete = () => {
@@ -181,9 +187,6 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       },
     ]
 
-    console.log("step2.this.props",this.props)
-    console.log("this.state",this.state)
-
 
     if (showStepOne) {
       return (
@@ -205,7 +208,7 @@ export default class iSCSIMappingRegisteredModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="target"
         data={formTemplate}
         onCancel={this.showStepOne}
         onClose={this.handleCancel}

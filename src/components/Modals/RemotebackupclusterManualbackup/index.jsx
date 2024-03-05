@@ -183,7 +183,6 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
   render() {
     const { visible, onCancel, formTemplate } = this.props
 
-    console.log("manual.props",this.props)
 
     const title = 'Manual Remote Backup'
 
@@ -191,7 +190,7 @@ export default class RemoteBackupClusterCreateModal extends React.Component {
       <Modal.Form
         width={600}
         title={t(title)}
-        icon="database"
+        icon="backup"
         data={formTemplate}
         onCancel={onCancel}
         onOk={this.handleCreate}
